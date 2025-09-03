@@ -52,6 +52,7 @@ class handler(BaseHTTPRequestHandler):
     
     def _handle_health_check(self):
         try:
+            from datetime import datetime
             # Simple health check
             response = {
                 "status": "healthy",
@@ -59,7 +60,7 @@ class handler(BaseHTTPRequestHandler):
                     "cache": "up",
                     "geocoding": "up"
                 },
-                "timestamp": "2024-09-03T16:00:00Z"
+                "timestamp": datetime.utcnow()
             }
             self._send_json_response(response)
         except Exception as e:
@@ -205,8 +206,15 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
         
-        response_json = json.dumps(data, indent=2)
+        response_json = json.dumps(data, indent=2, default=self._json_serializer)
         self.wfile.write(response_json.encode())
+    
+    def _json_serializer(self, obj):
+        """JSON serializer for objects not serializable by default json code"""
+        from datetime import datetime
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
     
     def _send_error_response(self, status_code, message):
         """Send error response"""
