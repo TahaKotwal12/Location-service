@@ -6,7 +6,6 @@ import time
 import uuid
 from datetime import datetime
 import structlog
-import uvicorn
 
 from app.config import settings
 from app.api.v1.location import router as location_router
@@ -159,6 +158,7 @@ async def root():
     }
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(
         "app.main:app",
         host=settings.HOST,
