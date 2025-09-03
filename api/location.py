@@ -142,11 +142,7 @@ class handler(BaseHTTPRequestHandler):
             # Check cache first
             cached_result = await self.cache_service.get_location(lat, lng, language)
             if cached_result:
-                return {
-                    "success": True,
-                    "data": cached_result,
-                    "cached": True
-                }
+                return self._format_clean_response(cached_result, lat, lng, cached=True)
             
             # Get location from geocoding service
             location_response = await self.geocoding_service.reverse_geocode(lat, lng, language)
@@ -155,7 +151,7 @@ class handler(BaseHTTPRequestHandler):
             if location_response.success:
                 await self.cache_service.set_location(lat, lng, language, location_response.dict())
             
-            return location_response.dict()
+            return self._format_clean_response(location_response.dict(), lat, lng, cached=False)
             
         except Exception as e:
             return {
@@ -166,6 +162,50 @@ class handler(BaseHTTPRequestHandler):
                 },
                 "coordinates": {"latitude": lat, "longitude": lng}
             }
+    
+    def _format_clean_response(self, response_data, lat, lng, cached=False):
+        """Format a clean response with only essential data"""
+        from datetime import datetime
+        
+        # Handle nested response structure
+        if 'data' in response_data and 'data' in response_data['data']:
+            inner_data = response_data['data']['data']
+        elif 'data' in response_data:
+            inner_data = response_data['data']
+        else:
+            inner_data = response_data
+        
+        # Extract address information
+        address_info = inner_data.get('address', {})
+        metadata_info = inner_data.get('metadata', {})
+        
+        # Return clean, structured response
+        return {
+            "success": True,
+            "address": {
+                "full": address_info.get('formattedAddress', 'Address not available'),
+                "short": address_info.get('shortAddress', 'Address not available'),
+                "components": {
+                    "street": address_info.get('components', {}).get('street'),
+                    "locality": address_info.get('components', {}).get('locality'),
+                    "city": address_info.get('components', {}).get('city'),
+                    "state": address_info.get('components', {}).get('state'),
+                    "country": address_info.get('components', {}).get('country'),
+                    "countryCode": address_info.get('components', {}).get('countryCode'),
+                    "pincode": address_info.get('components', {}).get('pincode')
+                }
+            },
+            "coordinates": {
+                "latitude": lat,
+                "longitude": lng
+            },
+            "metadata": {
+                "source": metadata_info.get('source', 'unknown'),
+                "cached": cached,
+                "processingTime": metadata_info.get('processingTime'),
+                "timestamp": datetime.utcnow()
+            }
+        }
     
     async def _batch_geocode_async(self, locations, language):
         """Async batch geocoding"""
