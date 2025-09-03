@@ -1,0 +1,27 @@
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Development files
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env 
