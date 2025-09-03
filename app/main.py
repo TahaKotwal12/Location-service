@@ -2,13 +2,11 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from contextlib import asynccontextmanager
 import time
 import uuid
 from datetime import datetime
 import structlog
 import uvicorn
-from mangum import Mangum
 
 from app.config import settings
 from app.api.v1.location import router as location_router
@@ -18,21 +16,13 @@ from app.utils.logging import configure_logging
 configure_logging()
 logger = structlog.get_logger()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan manager"""
-    logger.info("Starting Mini Location Service", version=settings.APP_VERSION)
-    yield
-    logger.info("Shutting down Mini Location Service")
-
-# Create FastAPI app
+# Create FastAPI app (simplified for serverless)
 app = FastAPI(
     title="Mini Location Service",
     description="High-performance location microservice for GPS coordinate reverse geocoding",
     version=settings.APP_VERSION,
-    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
-    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
-    lifespan=lifespan
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # CORS middleware
@@ -167,9 +157,6 @@ async def root():
         "status": "running",
         "docs_url": "/docs" if settings.ENVIRONMENT == "development" else None
     }
-
-# Vercel handler
-handler = Mangum(app)
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -68,7 +68,7 @@ class GeocodingService:
                     data=location_data,
                     coordinates={"latitude": lat, "longitude": lng}
                 )
-        except Exception as e:
+    except Exception as e:
             logger.warning("Nominatim API failed", error=str(e))
         
         # All services failed
